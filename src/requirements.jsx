@@ -21,12 +21,18 @@ import { Input } from 'reactstrap';
 // Plugin Components
 import RequirementRow from './requirement-row.jsx';
 
-
+/**
+ * Defines the RequirementsWorkspace component which consists of the control
+ * toolbar and the requirements table.
+ */
 // Define HomePage Component
 class RequirementsWorkspace extends Component {
 
+  /**
+   * Initializes the requirements workspace. Sets parent props, initializes the
+   * state, and binds component methods.
+   */
   constructor(props) {
-    // Initialize parent props
     super(props);
 
     this.state = {
@@ -42,6 +48,9 @@ class RequirementsWorkspace extends Component {
     this.unmountRequirement = this.unmountRequirement.bind(this);
   }
 
+  /**
+   * Defines the component behavior once the component is mounted.
+   */
   componentDidMount() {
     let org = this.state.project.org;
     let project = this.state.project.id;
@@ -67,38 +76,59 @@ class RequirementsWorkspace extends Component {
     });
   }
 
+  /**
+   * Unmounts a requirement row from the table. This function is passed into
+   * the RequirementRow component and is called by that component when the
+   * component is deleted.
+   */
   unmountRequirement(_id) {
     let reqs = this.state.requirements.filter(r => r.id !== _id);
     this.setState({requirements: reqs});
-    this.setMessageContent('');
   }
 
+  /**
+   * This helper function is used to set the message content in the toolbar.
+   * This function is passed to the RequirementRow objects to allow them to
+   * display messages on the toolbar.
+   */
   setMessageContent(content) {
     this.setState({messageContent: content})
   }
 
+  /**
+   * TODO - This function will be used to save all requirements.
+   */
   saveChanges() {
     console.log(this.state.requirements)
   }
 
+  /**
+   * This function is called when the "add requirement" button is clicked.
+   */
   addRequirement() {
-    // Inform user of action
-    let msg = (
+    // Inform user that a requirement is being added.
+    this.setMessageContent(
       <Badge color="primary">
         Adding new element ...
       </Badge>
     )
-    this.setMessageContent(msg)
 
+    // Initialize a default new requirement ID.
+    let newReqID = 'req-1_1';
+
+    // If requirements are already defined,
+    // parse ID of last requirement to generate the new ID
     let reqs = this.state.requirements;
+    if (reqs !== null && reqs.length > 0) {
+      let lastReq = this.state.requirements.slice(-1)[0];
+      let prefix = lastReq.id.split('_').slice(0, -1);
+      let suffix = lastReq.id.split('_').slice(-1);
+      newReqID = `${prefix.join('_')}_${Number(suffix) + 1}`
+    }
 
-    // Parse ID of last requirement
-    let lastReq = this.state.requirements.slice(-1)[0];
-    let prefix = lastReq.id.split('_').slice(0, -1);
-    let suffix = lastReq.id.split('_').slice(-1);
-
+    // Define the new requirement object
     let newReq = {
-      id: `${prefix.join('_')}_${Number(suffix) + 1}`,
+      id: newReqID,
       name: '',
       documentation: '',
       type: 'Requirement',
@@ -124,7 +154,7 @@ class RequirementsWorkspace extends Component {
       contentType: 'application/json',
       statusCode: {
         200: (data) => {
-          let reqs = this.state.requirements;
+          let reqs = this.state.requirements || [];
           reqs.push(data);
           this.setState({requirements: reqs});
           setTimeout(() => {
@@ -135,38 +165,36 @@ class RequirementsWorkspace extends Component {
       },
       error: (err) => {
         this.setState({ error: err.responseJSON.description });
-        let msg = (
+        this.setMessageContent(
           <Badge color="danger">
             {err.responseJSON.description}
           </Badge>
         )
-        this.setMessageContent(msg)
       }
     });
   }
 
 
+  /**
+   * This function renders the requirements workspace.
+   */
   render() {
+    // Initialize an empty table.
+    let tableBody = ('');
 
-    let tableBody = (
-      <tr>
-        <th scope="row">Loading ...</th>
-      </tr>
-    )
-
+    // If there are requirements, create RequirementRows in the table body.
     if (this.state.requirements !== null) {
       tableBody = this.state.requirements.map(req => {
-        return (
-          <RequirementRow key={'key-' + req.id}
-                          project={this.props.project}
-                          data={req}
-                          setMsgContent={this.setMessageContent}
-                          unmount={this.unmountRequirement}/>
-        )
+        return (<RequirementRow key={'key-' + req.id}
+                                project={this.props.project}
+                                data={req}
+                                setMsgContent={this.setMessageContent}
+                                unmount={this.unmountRequirement}/>)
       })
     }
 
-
+    // Defines a style for toolbar buttons
+    // TODO - move this to CSS
     let toolbarButtonStyle = {
       padding: '1px 4px',
       width: '25px',
@@ -226,4 +254,5 @@ class RequirementsWorkspace extends Component {
   }
 }
 
+// Export the component
 module.exports = RequirementsWorkspace;

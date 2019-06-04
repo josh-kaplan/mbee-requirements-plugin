@@ -7,27 +7,21 @@ import ReactDOM from 'react-dom';
 import { Button, Badge } from 'reactstrap';
 import { Input } from 'reactstrap';
 
-// MBEE Components
-//const M_COMPONENTS = '../../../app/ui/components';
-//import Sidebar from '../../../app/ui/components/general/sidebar/sidebar.jsx';
-//import SidebarLink from '../../../app/ui/components/general/sidebar/sidebar-link.jsx';
-//import SidebarHeader from '../../../app/ui/components/general/sidebar/sidebar-header.jsx';
-//import List from '../general/list/list.jsx';
-//import OrgList from '../home-views/org-list.jsx';
-//import Create from '../shared-views/create.jsx';
-//import Delete from '../shared-views/delete.jsx';
 
-// Plugin Components
-//import RequirementsWorkspace from './requirements.jsx';
-
-
-// Define HomePage Component
+/**
+ * Defines a RequirementsRow component.
+ * This component represents each row in the requirements table.
+ */
 class RequirementsRow extends Component {
 
+  /**
+   * Initializes the component. Sets parent props, nitializes state, binds
+   * component methods, etc.
+   */
   constructor(props) {
-    // Initialize parent props
     super(props);
 
+    // Check for verifyMethod in the custom data.
     let verifyMethod = '';
     if (this.props.data.custom.hasOwnProperty('requirements')) {
       if (this.props.data.custom.requirements.hasOwnProperty('verifyMethod')) {
@@ -35,6 +29,7 @@ class RequirementsRow extends Component {
       }
     }
 
+    // Init time used for initial value on date fields
     let initTime = new Date();
 
     this.state = {
@@ -49,21 +44,30 @@ class RequirementsRow extends Component {
       error: null
     }
 
+    // Bind this on component methods
     this.saveChanges = this.saveChanges.bind(this);
     this.handleChange = this.handleChange.bind(this);
     this.handleOnFocus = this.handleOnFocus.bind(this);
     this.handleOnBlur = this.handleOnBlur.bind(this);
     this.deleteRequirement = this.deleteRequirement.bind(this);
-
   }
 
+  /**
+   * Handles changes to requirement fields and updates the state accordingly.
+   * This function is called on change of requirement fields.
+   */
   handleChange(event) {
     this.setState({
       [event.target.name]: event.target.value,
       lastChanges: new Date()
-    });
+    })
+    setTimeout(this.saveChanges, 1000);
   }
 
+  /**
+   * Handles onFocus events on row cells.
+   * This is used to highlight the selected cell.
+   */
   handleOnFocus(event) {
     if (this.state.originalCellColor === null) {
       this.setState({
@@ -73,72 +77,92 @@ class RequirementsRow extends Component {
     event.target.parentElement.style['background'] = '#FFF9C4';
   }
 
+  /**
+   * Handles onBlur events on row cells. This is the "unfocus" event and
+   * is used to reset cell color.
+   */
   handleOnBlur(event) {
     event.target.parentElement.style['background'] = this.state.originalCellColor;
   }
 
+  /**
+   * Handles the prop rendering of our ID format.
+   * MBEE IDs must be lowercase and do no allow '.' characters.
+   * Our IDs are all lowercase, so toUpperCase() is called on the ID
+   * and we use '_' instead of '.'. This replacement is made here for rendering.
+   */
   transformID(_id) {
     return _id.toUpperCase().replace(/_/g, '.')
   }
 
+  /**
+   * Saves the changes made to the requirement.
+   */
   saveChanges() {
-    if (this.state.lastChanges > this.state.lastSave) {
-      // Let user know save is happening
-      let msg = (
-        <Badge color="primary">
-          Saving changes ...
-        </Badge>
-      )
-      this.props.setMsgContent(msg)
+    let now = new Date();
 
-      // Generate the new custom data object
-      let patchCustomData = this.props.data.custom;
-      patchCustomData['requirements'] = {};
-      patchCustomData['requirements']['verifyMethod'] = this.state.reqVerifyMethod;
-
-      // Generate the PATCH API url
-      let oid = this.state.project.org;
-      let pid = this.state.project.id;
-      let url = `/api/orgs/${oid}/projects/${pid}/branches/master`;
-      url = `${url}/elements/${this.state.reqID}`;
-
-      // Patch the element
-      $.ajax({
-        method: 'PATCH',
-        url: url,
-        data: JSON.stringify({
-          name: this.state.reqName,
-          documentation: this.state.reqText,
-          custom: patchCustomData
-        }),
-        contentType: 'application/json',
-        statusCode: {
-          200: (data) => {
-            this.setState({requirements: data});
-            this.setState({lastSave: new Date()})
-            setTimeout(() => {
-              this.props.setMsgContent('')
-            }, 1000);
-          },
-          401: (err) => { window.location.reload() }
-        },
-        error: (err) => {
-          this.setState({ error: err.responseJSON.description });
-          let msg = (
-            <Badge color="danger">
-              {err.responseJSON.description}
-            </Badge>
-          )
-          this.props.setMsgContent(msg)
-        }
-      });
+    // If the last changes were made less than 1s ago (i.e. user is still
+    // typing changes), return and wait for user to stop typing.
+    if ((now - this.state.lastChanges) < 1000) {
+      console.log('ret 2')
+      return;
     }
+
+    // Let user know save is happening
+    let msg = (
+      <Badge color="primary">
+        Saving changes ...
+      </Badge>
+    )
+    this.props.setMsgContent(msg)
+
+    // Generate the new custom data object
+    let patchCustomData = this.props.data.custom;
+    patchCustomData['requirements'] = {};
+    patchCustomData['requirements']['verifyMethod'] = this.state.reqVerifyMethod;
+
+    // Generate the PATCH API url
+    let oid = this.state.project.org;
+    let pid = this.state.project.id;
+    let url = `/api/orgs/${oid}/projects/${pid}/branches/master`;
+    url = `${url}/elements/${this.state.reqID}`;
+
+    // Patch the element
+    $.ajax({
+      method: 'PATCH',
+      url: url,
+      data: JSON.stringify({
+        name: this.state.reqName,
+        documentation: this.state.reqText,
+        custom: patchCustomData
+      }),
+      contentType: 'application/json',
+      statusCode: {
+        200: (data) => {
+          this.setState({requirements: data});
+          this.setState({lastSave: new Date()})
+          setTimeout(() => {
+            this.props.setMsgContent('')
+          }, 1000);
+        },
+        401: (err) => { window.location.reload() }
+      },
+      error: (err) => {
+        this.setState({ error: err.responseJSON.description });
+        let msg = (
+          <Badge color="danger">
+            {err.responseJSON.description}
+          </Badge>
+        )
+        this.props.setMsgContent(msg)
+      }
+    });
   }
 
+  /**
+   * Delete a requirement from the table
+   */
   deleteRequirement(event) {
-    console.log('Delete requirement. ')
-    console.log(this.state.reqID)
-
     let msg = (
       <Badge color="danger">
         Deleting requirement ...
@@ -157,9 +181,14 @@ class RequirementsRow extends Component {
       url: url,
       statusCode: {
         200: (data) => {
+          this.props.setMsgContent(
+            <Badge color="danger">
+              Deleted requirement.
+            </Badge>
+          )
           setTimeout(() => {
             this.props.setMsgContent('')
-          }, 1000);
+          }, 3000);
           this.props.unmount(this.state.reqID);
         },
         401: (err) => { window.location.reload() }
@@ -177,9 +206,9 @@ class RequirementsRow extends Component {
 
   }
 
-  componentDidMount() {
-    setInterval(this.saveChanges, 5000);
-  }
+  //componentDidMount() {
+  //  setInterval(this.saveChanges, 5000);
+  //}
 
   render() {
     return (
@@ -233,7 +262,7 @@ class RequirementsRow extends Component {
                   outline
                   color="danger"
                   onClick={this.deleteRequirement}>
-            <i className="fas fa-trash"></i>
+            <i className="fas fa-trash-alt"></i>
           </Button>
         </td>
       </tr>

@@ -1,9 +1,11 @@
 /**
- * app.jsx
+ * @module app.jsx
+ *
+ * @author Josh Kaplan
+ *
+ * @description Defines the requirements management application.
  */
 
-/* Modified ESLint rules for React. */
-/* eslint-disable no-unused-vars */
 
 // React Modules
 import React, { Component } from 'react';
@@ -12,24 +14,25 @@ import { Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
 import ReactDOM from 'react-dom';
 
 // MBEE Components
-const M_COMPONENTS = '../../../app/ui/components';
 import Sidebar from '../../../app/ui/components/general/sidebar/sidebar.jsx';
 import SidebarLink from '../../../app/ui/components/general/sidebar/sidebar-link.jsx';
 import SidebarHeader from '../../../app/ui/components/general/sidebar/sidebar-header.jsx';
-//import List from '../general/list/list.jsx';
-//import OrgList from '../home-views/org-list.jsx';
-//import Create from '../shared-views/create.jsx';
-//import Delete from '../shared-views/delete.jsx';
 
 // Plugin Components
 import RequirementsWorkspace from './requirements.jsx';
 import SettingsModal from './settings.jsx';
 
-// Define HomePage Component
-class ReqApp extends Component {
+/**
+ * Defines the RequirementsApp component. This is the top-level component
+ * in the requirements management application.
+ */
+class RequirementsApp extends Component {
 
+  /**
+   * Initializes the RequirementsApp component. Sets parent props, initializes
+   * state, and binds component methods.
+   */
   constructor(props) {
-    // Initialize parent props
     super(props);
 
     this.state = {
@@ -37,19 +40,27 @@ class ReqApp extends Component {
       project: null,
       data: null,
       error: null,
-      settings: false
+      settingsOpen: false
     }
 
     this.handleSettingsToggle = this.handleSettingsToggle.bind(this);
   }
 
+  /**
+   * This function toggles the open/closed state of the settings modal.
+   * It is triggered by the settings button and modal close buttons.
+   */
   handleSettingsToggle() {
-    console.log(this.state.settings)
     this.setState({settings: !this.state.settings})
   }
 
+  /**
+   * Defines the behavior of the component once it is mounted.
+   * It makes an API call to grab project information and sets the project
+   * state.
+   */
   componentDidMount() {
-    // Parse the current URL
+    // Parse the current URL to determine expected project.
     let org = window.location.pathname.split('/').slice(-2)[0];
     let proj = window.location.pathname.split('/').slice(-2)[1];
 
@@ -74,6 +85,9 @@ class ReqApp extends Component {
     });
   }
 
+  /**
+   * This function defines how the app is rendered.
+   */
   render() {
     // If org or project are null, render a 404
     if (this.state.org === null || this.state.project === null) {
@@ -149,10 +163,11 @@ class ReqApp extends Component {
                        href={`/${this.state.org}/${this.state.project}/users`}/>
           {(displayPlugins) ? (plugins) : '' }
         </Sidebar>
-
         <div id="workspace">
           <div id="workspace-header" className="workspace-header">
-            <h2 id="workspace-title" className="workspace-title">Requirements</h2>
+            <h2 id="workspace-title" className="workspace-title">
+              Requirements
+            </h2>
             <div className='workspace-header-button'>
               <Button className='btn'
                       outline
@@ -166,7 +181,7 @@ class ReqApp extends Component {
             { body }
           </div>
         </div>
-        <SettingsModal isOpen={this.state.settings}
+        <SettingsModal isOpen={this.state.settingsOpen}
                        toggle={this.handleSettingsToggle}
                        data={this.state.data}/>
       </div>
@@ -175,4 +190,4 @@ class ReqApp extends Component {
 
 }
 
-ReactDOM.render(<ReqApp />, document.getElementById('main'));
+ReactDOM.render(<RequirementsApp />, document.getElementById('main'));
