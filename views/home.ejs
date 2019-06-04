@@ -1,0 +1,50 @@
+<div id="main" class="view"></div>
+
+
+<%- contentFor('styles') %>
+<style>
+#workspace-body .container-fluid {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.table-striped tbody tr:nth-of-type(2n+1) {
+  background-color: rgba(128, 172, 215, 0.1);
+}
+
+.workspace-toolbar {
+  height: 30px;
+  border-bottom: 1px solid #333;
+  padding: 1px 10px;
+}
+
+#toolbar-message-area {
+  width: 50%;
+}
+
+#toolbar-buttons-area {
+  float: right;
+}
+
+table .form-control {
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 0 4px;
+  margin: 0;
+}
+
+input.form-control::placeholder {
+  color: #aaa;
+}
+
+table input:focus, table .form-control:focus {
+  outline: none;
+  box-shadow: none;
+  border-radius: 1px;
+  background: transparent;
+}
+</style>
+
+<%- contentFor('scripts') %>
+<script type="text/javascript" src="/js/reqApp.js"></script>
