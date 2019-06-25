@@ -4,7 +4,7 @@
   "description": "A requirements plugin for MBEE.",
   "main": "app.js",
   "author": "Josh Kaplan",
-  "license": "Josh Kaplan Proprietary Information",
+  "license": "MIT",
   "private": true,
   "scripts": {
     "postinstall": "echo \"Running build\"; node ./build.js",
